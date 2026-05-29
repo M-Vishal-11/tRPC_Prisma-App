@@ -1,7 +1,6 @@
 "use client";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useTRPC } from "./_trpc/client";
-import { useState } from "react";
 
 export default function Home() {
   const trpc = useTRPC();
@@ -9,16 +8,17 @@ export default function Home() {
   const { data: backendData, isLoading } = useQuery(
     trpc.getData.queryOptions(),
   );
-  console.log(backendData);
 
-  const {
-    mutate: mutate1,
-    isPending,
-    data: bottomData,
-  } = useMutation(trpc.setData.mutationOptions());
+  // const {
+  //   mutate: mutate1,
+  //   isPending,
+  //   data: bottomData,
+  // } = useMutation(trpc.setData.mutationOptions());
 
+  const op = useMutation(trpc.setData.mutationOptions());
+  console.log(op);
   const buttonClicked = () => {
-    mutate1();
+    op.mutate({ thing: "Game", broo: true });
   };
 
   return (
@@ -37,8 +37,8 @@ export default function Home() {
           Huh! Click me... Plss
         </button>
         <p className="text-xl">
-          {!isPending && bottomData && (
-            <span>Data: {JSON.stringify(bottomData)}</span>
+          {op.isSuccess && op.data && (
+            <span>Data: {JSON.stringify(op.data)}</span>
           )}
         </p>
       </div>

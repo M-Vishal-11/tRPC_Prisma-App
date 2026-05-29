@@ -37,7 +37,9 @@ export default function Home() {
           Huh! Click me... Plss
         </button>
         <p className="text-xl">
-          {!isPending && bottomData && <p>Data: {bottomData}</p>}
+          {!isPending && bottomData && (
+            <span>Data: {JSON.stringify(bottomData)}</span>
+          )}
         </p>
       </div>
     </div>

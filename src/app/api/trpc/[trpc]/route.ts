@@ -7,7 +7,7 @@ const handler = (req: Request) => {
     req,
     router: appRouter,
     createContext: () => {
-      return { Name: "Me" };
+      return { name: "Me" };
     },
   });
 };

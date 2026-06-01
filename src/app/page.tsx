@@ -1,9 +1,11 @@
 "use client";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useTRPC } from "./_trpc/client";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
   const trpc = useTRPC();
+  const router = useRouter();
 
   const { data: backendData, isLoading } = useQuery(
     trpc.getData.queryOptions(),
@@ -41,6 +43,14 @@ export default function Home() {
             <span>Data: {JSON.stringify(op.data)}</span>
           )}
         </p>
+        <div>
+          <button
+            className="block ml-auto border-2 mt-4 relative p-2 bg-green-200 hover:bg-green-300"
+            onClick={() => router.push("/authentication")}
+          >
+            Click To Signin
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -16,7 +16,7 @@ export default function Home() {
   // } = useMutation(trpc.setData.mutationOptions());
 
   const op = useMutation(trpc.setData.mutationOptions());
-  console.log(op);
+  // console.log(op);
   const buttonClicked = () => {
     op.mutate({ thing: "Game", broo: true });
   };

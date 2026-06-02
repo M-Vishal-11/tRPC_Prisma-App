@@ -1,12 +1,15 @@
 "use client";
 
 import { signIn, signUp } from "@/lib/auth-client"; // 👑 Added signUp named import
+import { useRouter } from "next/navigation";
 import { useState, SubmitEvent } from "react"; // Using modern React 19 SubmitEvent
 
 export default function AuthenticationPage() {
   const [isSignIn, setIsSignIn] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  const router = useRouter();
 
   const toggleTab = (signInMode: boolean) => {
     setError(null);
@@ -26,17 +29,24 @@ export default function AuthenticationPage() {
       return;
     }
 
-    const res = await signIn.email({
-      email: formData.get("email") as string,
-      password: formData.get("password") as string,
-    });
-
-    if (res?.error) {
-      console.error("Signin Failed: ", res.error.message);
-      setError(res.error.message || "Something went wrong.");
-    } else {
+    const res = await signIn.email(
+      {
+        email: formData.get("email") as string,
+        password: formData.get("password") as string,
+      },
+      {
+        onError: (ctx) => {
+          console.error("Signin Failed: ", ctx.error.message);
+          setError(ctx.error.message || "Something went wrong.");
+        },
+        onSuccess: () => {
+          setSuccess("Logged in successfully!");
+          router.push("/");
+        },
+      },
+    );
+    if (!res.error) {
       console.log("Logged in successfully!", res);
-      setSuccess("Logged in successfully!");
     }
   }
 

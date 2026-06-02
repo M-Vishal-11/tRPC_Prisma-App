@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { publicProcedure, router } from "../trpc";
+import { authRouter } from "./AuthRouter";
 
 export const appRouter = router({
   getData: publicProcedure.query(({ ctx }) => {
@@ -15,6 +16,7 @@ export const appRouter = router({
         broo: input.broo,
       };
     }),
+  authRouter: authRouter,
 });
 
 export type AppRouter = typeof appRouter;

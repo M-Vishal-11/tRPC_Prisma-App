@@ -82,7 +82,7 @@ export default function Home() {
             (!session.data?.user ? (
               <button
                 className="block ml-auto border-2 px-4 py-2 bg-green-200 hover:bg-green-300 rounded-lg font-medium transition-all text-sm shadow-sm active:scale-95"
-                onClick={() => router.push("/authentication")}
+                onClick={() => router.push("/auth")}
               >
                 Click To Signin
               </button>

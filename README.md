@@ -1,36 +1,136 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ⚡ T3 Stack & Better Auth Sandbox
 
-## Getting Started
+A high-performance, fully type-safe interactive authentication sandbox built using the **T3 Stack** (Next.js, Prisma, tRPC) and powered by **Better Auth**. 
 
-First, run the development server:
+This project was developed as a hands-on learning environment to master secure authentication patterns, custom middleware hooks, and complex database interactions without needing third-party email/SMS gateways.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## 🚀 Core Tech Stack
+
+- **Framework**: [Next.js 16](https://nextjs.org/) (App Router, React 19)
+- **API Layer**: [tRPC v11](https://trpc.io/) & [TanStack Query v5](https://tanstack.com/query) for end-to-end type safety.
+- **Database & ORM**: [Prisma ORM](https://www.prisma.io/) with [PostgreSQL](https://neon.tech/) (hosted on Neon).
+- **Authentication**: [Better Auth](https://www.better-auth.com/) (Version 1.6+) utilizing the Prisma database adapter.
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/) with PostCSS.
+
+---
+
+## 🛠️ Implemented Features & Security Patterns
+
+### 1. Robust Core Authentication
+*   **Email & Password Authentication**: Full-featured sign-up, sign-in, and sign-out capabilities.
+*   **Session Management**: Support for persistent sessions via the standard `"Remember Me"` cookie configuration.
+
+### 2. Multi-Factor Security (2FA)
+*   **Two-Factor Authentication (OTP)**: Implemented using Better Auth's `twoFactor` server and client plugins.
+*   **Zero-Config Simulation**: OTPs are generated on the server and intercepted in the database, enabling quick testing without external SMS/Email APIs.
+
+### 3. Session Hardening & Security Hooks
+*   **Single-Session Enforcement**: Utilizes a Better Auth post-session middleware (`after` hooks) to automatically query and purge all other active sessions for a user upon logging in. 
+*   **Active Session Revocation**: Modifying your credentials terminates all other active sessions across different devices instantly.
+
+### 4. Interactive Password Recovery
+*   **Change Password**: Users can update their passwords mid-session, requiring current credentials and revoking all other active browser tokens.
+*   **Reset Password Flow**: Intercepts password reset requests on the server, logs the live reset link to the console, and allows users to update credentials securely using token validation.
+
+---
+
+## 🔮 How the Interactive Simulation Works
+
+Since this is a development sandbox, there are no external SMS or email gateways integrated. Instead, the application leverages **tRPC** to query active database validation records and simulate real-time notification alerts:
+
+```mermaid
+sequenceDiagram
+    actor User as Client UI
+    participant Server as Next.js Server
+    participant DB as Postgres (Neon)
+
+    Note over User, Server: 1. Logging In with 2FA
+    User->>Server: Click Login (Credentials)
+    Server-->>DB: Create Session & Generate 2FA OTP
+    Server-->>User: Success (OTP Pending)
+    
+    Note over User, DB: 2. Simulating OTP Delivery
+    User->>Server: tRPC Query (getOTP)
+    Server->>DB: Fetch latest OTP from Verification table
+    DB-->>Server: Return OTP Code
+    Server-->>User: Display OTP in Toast Notification
+    
+    Note over User, Server: 3. OTP Submission
+    User->>Server: Submit OTP code
+    Server->>DB: Verify & Activate Session
+    Server-->>User: Auth Success!
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 🔑 Simulated Password Reset Flow
+1. The user requests a password reset from `/auth/forgotPassword`.
+2. Better Auth generates a reset token, intercepts it on the server, and outputs the live link directly to the console.
+3. The user is redirected to `/auth/new-password?email=user@example.com`.
+4. On mount, a **tRPC query** (`getVerificationTokenByEmail`) queries the database for the active reset token matching the user's ID.
+5. The token is populated automatically into the client-side state, allowing the user to set a new password seamlessly.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📂 Project Architecture
 
-## Learn More
+```filepath
+trpc/
+├── prisma/
+│   └── schema.prisma        # Database models (User, Session, Account, Verification)
+├── src/
+│   ├── app/
+│   │   ├── _trpc/           # Client-side tRPC react-query wrappers
+│   │   ├── api/
+│   │   │   └── auth/        # Better Auth route handler endpoints
+│   │   ├── auth/            # Auth pages (Login, Register, Forgot Password, Reset)
+│   │   │   ├── forgotPassword/
+│   │   │   └── new-password/
+│   │   ├── layout.tsx       # Root layout importing tRPC providers
+│   │   └── page.tsx         # Dashboard displaying session details and mutation streams
+│   ├── lib/
+│   │   ├── auth-client.ts   # Better Auth client config with 2FA plugin
+│   │   ├── auth.ts          # Better Auth server configuration and hooks
+│   │   └── prisma.ts        # Prisma Client singleton initializer
+│   └── server/
+│       ├── routers/
+│       │   ├── appRouter.ts # Merged app router
+│       │   └── AuthRouter.ts# tRPC endpoints to fetch OTP/Reset tokens
+│       └── trpc.ts          # tRPC context and procedure creators
+```
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## ⚙️ Getting Started
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 1. Clone & Install Dependencies
+```bash
+pnpm install
+```
 
-## Deploy on Vercel
+### 2. Configure Environment Variables
+Create a `.env` file in the root directory:
+```env
+DATABASE_URL="postgresql://<user>:<password>@<host>/<database>?sslmode=require"
+BETTER_AUTH_SECRET="your-generate-32-char-secret-key"
+BETTER_AUTH_URL="http://localhost:3000"
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 3. Generate Database Client & Push Schema
+```bash
+npx prisma db push
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 4. Run the Development Server
+```bash
+pnpm dev
+```
+Open [http://localhost:3000](http://localhost:3000) to interact with the project!
+
+---
+
+## 🧠 Key Takeaways & Learned Concepts
+
+*   **T3 Stack Synergy**: Experienced first-hand how tRPC connects React components directly to Prisma queries, providing type safety across the network boundaries.
+*   **Better Auth Extensibility**: Leveraged plugins (2FA) and custom server-side hooks to easily inject rules like single-session logins.
+*   **Database-Driven Simulation**: Solved local simulation hurdles creatively by exposing controlled tRPC queries to retrieve verification codes, highlighting database schema flows.

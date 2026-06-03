@@ -34,6 +34,7 @@ export default function Home() {
       fetchOptions: {
         onSuccess: () => {
           toast.success("Logged Out Successfully");
+          router.push("/auth");
         },
         onError: (ctx) => {
           toast.error(ctx.error.message || "Failed to log out");
@@ -67,7 +68,6 @@ export default function Home() {
           Huh! Click me... Plss
         </button>
 
-        {/* 👑 FIXED: Shifted from <p> to <div> container to guarantee hydration safety */}
         <div className="text-xl min-h-10">
           {op.isSuccess && op.data && (
             <div className="bg-green-50 border border-green-200 p-3 rounded-lg font-mono text-sm text-green-700 animate-fade-in">

@@ -2,7 +2,7 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import prisma from "./prisma";
 import { createAuthMiddleware } from "better-auth/api";
-import { redirect } from "next/navigation";
+import { twoFactor } from "better-auth/plugins";
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
@@ -28,6 +28,48 @@ export const auth = betterAuth({
       });
     },
   },
+
+  appName: "myapp",
+  plugins: [
+    twoFactor({
+      otpOptions: {
+        async sendOTP({ user, otp }, ctx) {
+          console.log(user);
+          console.log(otp);
+
+          const mapping = await prisma.verification.findFirst({
+            where: {
+              value: user.id,
+              identifier: {
+                startsWith: "2fa-",
+              },
+              NOT: {
+                identifier: {
+                  startsWith: "2fa-otp-",
+                },
+              },
+            },
+            select: {
+              identifier: true,
+            },
+          });
+
+          if (mapping) {
+            await prisma.verification.deleteMany({
+              where: {
+                identifier: {
+                  startsWith: `2fa-otp-${mapping.identifier}`,
+                },
+                value: {
+                  not: `${otp}:0`,
+                },
+              },
+            });
+          }
+        },
+      },
+    }),
+  ],
 
   trustedOrigins: ["http://localhost:3001"],
   hooks: {

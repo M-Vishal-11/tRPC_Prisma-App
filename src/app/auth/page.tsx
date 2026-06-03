@@ -1,29 +1,52 @@
 "use client";
 
-import { signIn, signUp } from "@/lib/auth-client";
+import { signIn, signUp, twoFactor } from "@/lib/auth-client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, SubmitEvent } from "react";
+import toast from "react-hot-toast";
+import { useTRPC } from "../_trpc/client";
+import { useQuery } from "@tanstack/react-query";
 
 export default function AuthenticationPage() {
   const [isSignIn, setIsSignIn] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState<boolean>(false);
+  const [signedIn, setsignedIn] = useState<boolean>(false);
+  const [otpState, setOTPState] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
 
   const router = useRouter();
+  const trpc = useTRPC();
+  const { refetch } = useQuery({
+    ...trpc.authRouter.getOTP.queryOptions({ email }),
+    enabled: false,
+  });
 
   const toggleTab = (signInMode: boolean) => {
     setError(null);
     setIsSignIn(signInMode);
   };
 
+  async function displayOTP() {
+    try {
+      const res = await refetch();
+      toast.success(res.data?.otp || "Click on Resend OTP", {
+        duration: 4000,
+      });
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
   async function handleSignin(e: SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
     const formData = new FormData(e.currentTarget);
+    const emailInput = formData.get("email") as string;
 
-    if (!formData.get("email")) {
+    if (!emailInput) {
       setError("All form fields are required.");
       return;
     } else if (!formData.get("password")) {
@@ -31,21 +54,29 @@ export default function AuthenticationPage() {
       return;
     }
 
+    setEmail(emailInput);
+
     // Handle Loggin
     const res = await signIn.email(
       {
-        email: formData.get("email") as string,
+        email: emailInput,
         password: formData.get("password") as string,
         rememberMe: rememberMe,
       },
       {
         onError: (ctx) => {
-          console.error("Signin Failed: ", ctx.error.message);
+          console.log("Signin Failed: ", ctx.error.message);
           setError(ctx.error.message || "Something went wrong.");
         },
-        onSuccess: () => {
+        onSuccess: async () => {
           setSuccess("Logged in successfully!");
-          router.push("/");
+
+          await twoFactor.sendOtp();
+
+          toast.success("OTP Sent, waiting time: 1 second");
+          setTimeout(() => displayOTP(), 1000);
+          setsignedIn(true);
+          setSuccess("");
         },
       },
     );
@@ -79,12 +110,12 @@ export default function AuthenticationPage() {
       {
         rememberMe: false,
         onError: (ctx) => {
-          console.error("Signin Failed: ", ctx.error.message);
+          console.log("Signin Failed: ", ctx.error.message);
           setError(ctx.error.message || "Something went wrong.");
         },
-        onSuccess: () => {
+        onSuccess: async () => {
           setSuccess("Account created successfully!");
-          router.push("/authentication");
+          router.push("/auth");
         },
       },
     );
@@ -92,6 +123,31 @@ export default function AuthenticationPage() {
       console.log("Logged in successfully!", res);
     }
   }
+
+  const handleResendOTP = async () => {
+    await twoFactor.sendOtp();
+    toast.success("OTP Sent, waiting time: 1 second");
+    setTimeout(() => displayOTP(), 1000);
+  };
+
+  const handleOTPVerification = async () => {
+    console.log(otpState);
+    await twoFactor.verifyOtp(
+      {
+        code: otpState,
+      },
+      {
+        onError: (ctx) => {
+          console.log("Signin Failed: ", ctx.error.message);
+          setError(ctx.error.message || "Something went wrong.");
+          console.log(ctx.error.message);
+        },
+        onSuccess: async () => {
+          setSuccess("Email Verified Successfully");
+        },
+      },
+    );
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
@@ -144,7 +200,47 @@ export default function AuthenticationPage() {
                 className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
+
+              {signedIn && (
+                <button
+                  onClick={handleResendOTP}
+                  className="text-xs text-blue-600 hover:text-blue-700 hover:underline transition font-medium ml-76"
+                >
+                  Resend OTP
+                </button>
+              )}
             </div>
+
+            {signedIn && (
+              <div className="flex flex-col items-center justify-center space-y-2">
+                <label className="text-sm font-medium text-gray-700 w-full text-left">
+                  Enter Security Code
+                </label>
+
+                <input
+                  type="text"
+                  name="otp"
+                  maxLength={6}
+                  pattern="[0-9]*"
+                  inputMode="numeric"
+                  placeholder="000000"
+                  className="w-full border-2 border-gray-200 rounded-xl p-3 text-center text-2xl font-mono tracking-[0.6em] indent-[0.3em] font-bold text-gray-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all focus:outline-none"
+                  required
+                  value={otpState}
+                  onChange={(e) => {
+                    const sanitizedValue = e.target.value.replace(
+                      /[^0-9]/g,
+                      "",
+                    );
+                    setOTPState(sanitizedValue);
+                  }}
+                />
+
+                <p className="text-xs text-gray-400 w-full text-left">
+                  Please input the 6-digit verification sequence.
+                </p>
+              </div>
+            )}
 
             <div className="flex items-center justify-between mb-1">
               <label className="text-sm font-medium text-gray-700">
@@ -175,12 +271,22 @@ export default function AuthenticationPage() {
               />
             </div>
 
-            <button
-              type="submit"
-              className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition font-medium"
-            >
-              Sign In
-            </button>
+            {!signedIn ? (
+              <button
+                type="submit"
+                className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition font-medium"
+              >
+                Login
+              </button>
+            ) : (
+              <button
+                onClick={handleOTPVerification}
+                type="button"
+                className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 active:scale-[0.98]"
+              >
+                Verify Email
+              </button>
+            )}
           </form>
         ) : (
           <form className="space-y-4" onSubmit={handleSignup}>
@@ -222,7 +328,8 @@ export default function AuthenticationPage() {
             </div>
             <button
               type="submit"
-              className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition font-medium"
+              className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition font-medium disabled:opacity-50 disabled:pointer-events-none"
+              // disabled={!verified}
             >
               Create Account
             </button>

@@ -7,8 +7,6 @@ allowBuilds:
 ignoredBuiltDependencies:
   - sharp
   - unrs-resolver
+
 overrides:
   kysely: "0.28.2"
-allowBuilds:
-  "prisma": true
-  "@prisma/engines": true

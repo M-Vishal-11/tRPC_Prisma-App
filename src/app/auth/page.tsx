@@ -151,7 +151,7 @@ export default function AuthenticationPage() {
   };
 
   const handleGoogleSignIn = async () => {
-    const data = await signIn.social(
+    await signIn.social(
       {
         provider: "google",
         callbackURL: "/",

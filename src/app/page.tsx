@@ -100,7 +100,7 @@ export default function Home() {
           </div>
         </div>
       ),
-      { id: "delete-confirmation", duration: Infinity },
+      { id: "delete-confirmation", duration: 10000 },
     );
   };
   return (
@@ -161,29 +161,27 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 py-4 bg-transparent">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end content-center gap-3 py-4 bg-transparent">
+                  {/* Attractive Dashboard Button */}
                   <button
                     type="button"
-                    onClick={handleChangePassword}
-                    className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm transition active:scale-[0.99]"
+                    onClick={() => router.push("/dashboard")} // Or your custom navigation handler
+                    className="px-4 py-2.5 bg-neutral-900 hover:bg-neutral-800 text-white text-sm font-medium rounded-lg shadow-sm transition flex items-center justify-center gap-2 active:scale-[0.99]"
                   >
-                    Change Password
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleResetPassword}
-                    className="px-4 py-2.5 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 text-sm font-medium rounded-lg shadow-sm transition active:scale-[0.99]"
-                  >
-                    Reset Password
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleDeleteUser}
-                    className="px-4 py-2.5 sm:ml-auto bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 text-sm font-medium rounded-lg transition active:scale-[0.99]"
-                  >
-                    Delete User
+                    <svg
+                      className="w-4 h-4 text-neutral-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4zM14 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z"
+                      />
+                    </svg>
+                    Dashboard
                   </button>
                 </div>
               </>

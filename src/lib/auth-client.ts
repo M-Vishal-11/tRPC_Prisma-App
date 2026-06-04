@@ -10,6 +10,7 @@ export const {
   requestPasswordReset,
   resetPassword,
   twoFactor,
+  deleteUser,
 } = createAuthClient({
   plugins: [twoFactorClient()],
 });

@@ -10,7 +10,7 @@ export default function DashboardPage() {
   const { data: session, isPending } = useSession();
 
   const handleChangePassword = () => {
-    router.push("/auth/forgotPassword");
+    router.push(`/auth/forgotPassword?email=${session?.user.email}`);
   };
 
   const handleResetPassword = () => {

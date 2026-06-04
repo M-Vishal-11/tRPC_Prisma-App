@@ -71,7 +71,7 @@ export const auth = betterAuth({
     }),
   ],
 
-  trustedOrigins: ["http://localhost:3001"],
+  // trustedOrigins: ["http://localhost:3001"],
   hooks: {
     after: createAuthMiddleware(async (ctx) => {
       const newSession = ctx.context.newSession;

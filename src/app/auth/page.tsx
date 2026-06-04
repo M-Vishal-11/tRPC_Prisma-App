@@ -144,6 +144,7 @@ export default function AuthenticationPage() {
         },
         onSuccess: async () => {
           setSuccess("Email Verified Successfully");
+          router.push("/");
         },
       },
     );

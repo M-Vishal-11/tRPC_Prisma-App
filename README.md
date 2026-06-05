@@ -4,6 +4,8 @@ A high-performance, fully type-safe interactive authentication sandbox built usi
 
 This project was developed as a hands-on learning environment to master secure authentication patterns, custom middleware hooks, and complex database interactions without needing third-party email/SMS gateways.
 
+##### Live Demo: https://t-rpc-prisma-app.vercel.app
+
 ---
 
 ## 🚀 Core Tech Stack
